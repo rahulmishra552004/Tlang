@@ -1,7 +1,8 @@
 # Tlang
-Chrome extension for Youtube audio translation
 
-Tlang gets a translated transcript of a YouTube video. It takes the caption URL the YouTube player requests, changes `fmt` to `vtt`, and adds `tlang=<language code>`.
+Manifest V3 Chrome extension for YouTube transcript translation.
+
+Tlang captures the caption request for the current YouTube video, obtains the transcript, and stores it locally for later translation, display, or export. The current prototype captures the signed caption URL with the Performance API and makes a second request with `fmt=vtt` and `tlang=<language code>`. A planned response-capture path will instead clone YouTube's original response in the page's main JavaScript world, avoiding that extra request.
 
 > **Note:** nothing below is documented by YouTube. These are observations from Chrome DevTools, and YouTube can change any of them without notice. Re-run the Phase 1 tests if something stops working.
 
@@ -9,21 +10,40 @@ Tlang gets a translated transcript of a YouTube video. It takes the caption URL 
 
 | Phase | What | Status |
 |---|---|---|
-| 0 | Extension basics (6 lessons + final exercise) | Lessons 1, 3, 4, 5 built; Lesson 2 (Broken Color sample), Lesson 6 (storage) and the final exercise not done yet |
+| 0 | Extension basics (6 lessons + final exercise) | Lessons 1, 3, 4, 5 and 6 built; Lesson 2 (Broken Color sample) and the final exercise not done yet |
 | 1 | Do it by hand in DevTools | Done (open questions below) |
 | 2 | Content script on watch pages | In progress |
-| 3 | Capture the signed caption URL | Not started (design below) |
-| 4 | Build the translated URL and fetch it | Not started |
+| 3 | Capture the signed caption URL | Prototype implemented with `performance.getEntriesByType()` and `PerformanceObserver` |
+| 4 | Obtain and store transcript data | Manual VTT fetch prototype implemented; main-world response capture is the next revision |
 | 5 | Turn VTT into lines | Not started |
 | 6 | Handle moving to the next video | Not started |
-| 7 | Side panel, language choice, export | Not started |
+| 7 | Side panel, language choice, export | `storage.local` prototype implemented; UI and export not started |
 | 8 | Failures and fallback | Not started |
 
 ## Content script findings (Lesson 3, 2026-11-08)
 
-- With `"matches": ["https://www.youtube.com/watch*"]`, the content script **only runs when a watch page is loaded or reloaded directly**. Opening the home page and then clicking a video does **not** run it, because YouTube switches pages without loading a new document.
-- **Decision (Phase 2):** keep `"matches": ["https://www.youtube.com/*"]` so the script is always present, and check in code whether the current page is a video (`/watch`).
+- The current manifest uses `"matches": ["https://www.youtube.com/watch*"]`. The content script therefore **only runs when a watch page is loaded or reloaded directly**. Opening the home page and then clicking a video does **not** run it, because YouTube switches pages without loading a new document.
+- **Planned Phase 2 change:** use `"matches": ["https://www.youtube.com/*"]` so the script is always present, and check in code whether the current page is a video (`/watch`).
 - **Decision (Phase 6):** since the script runs once per page load, it has to be told when YouTube moves to another video.
+
+## Current prototype flow (2026-11-09)
+
+1. Read the current `v` parameter from the watch-page URL.
+2. Check `browser.storage.local` for `subtitles:<videoId>:<language>`.
+3. Search existing `resource` performance entries for a matching `/api/timedtext` request.
+4. If no entry exists, start a `PerformanceObserver` before triggering CC. The observer Promise may resolve before it is awaited; Promises retain their settled value.
+5. Press the CC button twice while preserving its initial on/off state. Wait for the timed-text entry before the click that turns captions back off.
+6. Modify only `fmt` and `tlang`, fetch the VTT response, then store its text and metadata in `storage.local`.
+
+The observer is started early because the caption request can occur while the video is loading. If the content script moves to `document_start`, it must wait for the video and CC button with a `MutationObserver`; those elements do not exist yet at that stage.
+
+### Performance API boundary
+
+- `performance.getEntriesByType('resource')` searches resource entries already retained in the page's performance timeline.
+- `PerformanceObserver` receives matching entries as the browser records them. `buffered: true` also requests retained earlier entries.
+- A `PerformanceResourceTiming` entry exposes the URL as `entry.name` plus timing and size metadata.
+- It does **not** expose request headers, response headers, or the response body.
+- Entries belong to a specific global context. A request made inside another frame or worker may not appear in the top frame's timeline.
 
 ## Phase 1 findings (2026-11-08)
 
@@ -61,28 +81,44 @@ Tlang gets a translated transcript of a YouTube video. It takes the caption URL 
 
 ## Design decisions from these findings
 
-- **Phase 3: capture, don't build.** The URL can't be built by hand or reused for another video, so the content script must take the player's own signed URL for the current video:
+- **Phase 3: capture, don't build.** The URL can't be built by hand or reused for another video, so the extension must identify the player's own signed URL for the current video:
   1. Look in the requests already recorded (`getEntriesByType`) for a `timedtext` URL whose `v=` matches the current video.
   2. If there isn't one, wait for one with `PerformanceObserver`.
   3. If none arrives, toggle CC to force a request: on if it was off, or off and on again if it was on. **This is needed on every video that loads with CC off.**
   4. If CC was off before, turn it off again after capturing.
   - Ignore URLs for other videos. Since the signature covers `v`, an old URL can't be fixed by editing it.
 - **One captured URL is one source track.** To get a different source track, choose it in the player's CC menu and capture the new URL. Any target language works from the same URL via `tlang`.
-- **Phase 4: change only `fmt` and `tlang`.** Don't touch anything listed in `sparams`. After fetching, check **both**:
+- **Current Phase 4 prototype: change only `fmt` and `tlang`.** Don't touch anything listed in `sparams`. After fetching, check **both**:
   - `response.ok`, which catches the `404` cases;
   - that the text isn't empty and has cues, which catches the empty `200` case that `response.ok` misses.
+- **Preferred Phase 4 revision: capture YouTube's existing response body.** Run a small script in the page's `MAIN` world at `document_start`, wrap `fetch` (and `XMLHttpRequest` if necessary), clone matching responses, and send the body through `window.postMessage` to an `ISOLATED` content script. The isolated script validates the message and stores the data. This avoids the manual second request and reduces the chance of `429 Too Many Requests`.
+  - The captured body uses the format YouTube requested, usually undocumented `json3` rather than VTT.
+  - Convert captured JSON3 locally if VTT is required; do not refetch solely to change formats.
+  - Keep extension APIs and storage in the isolated script. Code in `MAIN` shares the page's JavaScript environment and can be observed or modified by the page.
 - **Phase 5:** handle both timestamp formats (`mm:ss.ttt` and `hh:mm:ss.ttt`), and strip in-cue tags such as `<00:00:01.234>` and `<c>` if they appear.
-- **Phase 7:** save the transcript text in `storage.local`, never the caption URL. URLs are signed and have an `expire` time.
+- **Phase 7:** save the transcript text in `storage.local`, never the caption URL. URLs are signed and have an `expire` time. Use a stable key such as `subtitles:<videoId>:<language>` and check it before clicking or fetching.
 - **Phase 8, first failure messages:** `404` → "Couldn't load captions"; empty `200` → "No captions in this track".
 
+### Request-count and rate-limit rules
+
+- One uncached run of the current prototype can cause two timed-text requests: one when CC turns on and another from the manual VTT fetch.
+- Check storage first, then reuse an existing performance entry before toggling CC.
+- Start the observer before the action that can produce the request.
+- Do not retry `429` responses automatically. Honor `Retry-After` when present and allow the rate limit to reset.
+- A failed fetch is not cached, so repeatedly reloading the extension or page repeats the full request flow.
+
 ## Open questions
-- [ ] **Expiry:** does the example URL below still work after its `expire` time (16:06 UTC, 2026-11-08)? If it gives `404`, that's a third failure case.
+- [ ] **Expiry:** does a captured URL stop working after its `expire` time? If it gives `404`, that's a third failure case.
 - [ ] Do `signature`, `expire` and `ei` change when CC is toggled off and on, or does the player reuse the same URL?
 - [ ] When changing `lang` gave an empty body, was `kind=asr` kept? A mismatch with an uploaded (non-auto) track might be the cause.
 - [ ] VTT details in YouTube's response: anything after `WEBVTT` on the first line, which timestamp format is used, cue settings such as `align:start`, and `<...>` tags in the text, especially on auto-generated captions.
-- [ ] Does a content script's `fetch()` get the same results as the address bar? Phase 4 will tell.
+- [ ] Does YouTube request timed text with `fetch` or `XMLHttpRequest` in every player configuration? The main-world response capture must support whichever mechanism is used.
+- [ ] Define and test a local JSON3-to-VTT conversion so response capture does not require another network request.
 
-## Example captured URL
-Signed; expires 16:06 UTC, 2026-11-08. Used for the expiry test. Delete it before pushing this repo anywhere public.
+## Redacted caption URL shape
 
-https://www.youtube.com/api/timedtext?v=2cNDbjPECKw&ei=ijvwao7pH4Wt9fwPuIHtgAs&caps=asr&opi=112496729&xoaf=5&xowf=1&xospf=1&hl=en&ip=0.0.0.0&ipbits=0&expire=1794153978&sparams=ip%2Cipbits%2Cexpire%2Cv%2Cei%2Ccaps%2Copi%2Cxoaf&signature=6B679B28ABB80EBB9DFD26AEB10C99CF5A200778.7BE7B06BDED4574B29E4FFE8EB5DB9FD0CC4436D&key=yt8&kind=asr&lang=ja&fmt=vtt&xorb=2&xobt=3&xovt=3&cbr=Chrome&cbrver=156.0.0.0&c=WEB&cver=2.20261105.05.01&cplayer=UNIPLAYER&cos=Windows&cosver=10.0&cplatform=DESKTOP&tlang=hi
+Never commit a complete signed caption URL, cookies, identity tokens, or request headers. A safe example is:
+
+```text
+https://www.youtube.com/api/timedtext?v=<video-id>&expire=<timestamp>&signature=<redacted>&lang=<source-language>&fmt=<format>&tlang=<target-language>
+```

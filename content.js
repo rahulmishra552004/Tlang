@@ -1,3 +1,17 @@
+const tlang = {
+  getCCButtonState,
+  clickCCButtonTwiceAndGetEntry,
+  waitForClick,
+  getDataFromStorage,
+  waitForInitialRender,
+  waitForTimedTextEntry,
+  storeData,
+  fetchVTT,
+  findTimedTextEntry,
+  formatTimedText,
+  getVTT,
+}
+
 const tlangGreeting = 'hi from tlang';
 console.log('[Tlang] content script running on', location.href);
 
@@ -13,63 +27,50 @@ console.log('[Tlang] content script running on', location.href);
   }
 })();
 
-const urlPrefix = 'https://www.youtube.com/api/timedtext';
-const resourceObserver = new PerformanceObserver(async (list, resourceObserver) => {
-  const entries = list.getEntries();
-  for (const entry of entries) {
-    const matchUrl = entry.name.startsWith(urlPrefix);
-    if (matchUrl) {
-      resourceObserver.disconnect();
-      const url = new URL(entry.name);
-      console.log('[tlang]', url);
-      const params = url.searchParams;
-      params.set('fmt', 'vtt');
-      params.set('tlang', 'en');
-      console.log('[tlang]', url);
-      const response = await fetch(url);
-      data = await response.text();
-      console.log(data);
-    }
-  }
-});
-
-function getCCButtonState() {
-  const isPressed = button.getAttribute('aria-pressed') === 'true';
-  if (isPressed) {
-    console.log('[tlang] cc is on');
-  } else {
-    console.log('[tlang] cc is off');
-  }
-  return isPressed;
+function getCCButtonState(button) {
+  return button.getAttribute('aria-pressed') === 'true';
 }
 
-async function clickCCButtonTwice() {
-  if (!button) {
-    console.log('[tlang] no button');
-  } else {
-    console.log('[tlang] clicking CC button twice');
-  }
-  const initialState = getCCButtonState();
+async function clickCCButtonTwiceAndGetEntry(button, entryPromise) {
+  const initialState = getCCButtonState(button);
   const stateAfterClick = !initialState;
 
-  const firstClick = waitForClick(stateAfterClick);
-  button.click();
-  await firstClick;
+  if (initialState) {
+    const firstClick = waitForClick(button, stateAfterClick);
+    button.click();
+    await firstClick;
 
-  const secondClick = waitForClick(initialState);
-  button.click();
-  await secondClick;
-  console.log('[tlang] button was clicked twice');
+    const secondClick = waitForClick(button, initialState);
+    button.click();
+    const [, entry] = await Promise.all([
+      secondClick,
+      entryPromise
+    ]);
+
+    return entry;
+  } else {
+    const firstClick = waitForClick(button, stateAfterClick);
+    button.click();
+    const [, entry] = await Promise.all([
+      firstClick,
+      entryPromise,
+    ]);
+    const secondClick = waitForClick(button, initialState);
+    button.click();
+    await secondClick;
+
+    return entry;
+  }
 }
 
-function waitForClick(expectedState, timeout = 3000) {
+function waitForClick(button, expectedState, timeout = 3000) {
   return new Promise((resolve, reject) => {
-    if (getCCButtonState() === expectedState) {
+    if (getCCButtonState(button) === expectedState) {
       resolve();
       return;
     }
     const stateObserver = new MutationObserver(() => {
-      if (getCCButtonState() === expectedState) {
+      if (getCCButtonState(button) === expectedState) {
         clearTimeout(timer);
         stateObserver.disconnect();
         resolve();
@@ -88,16 +89,183 @@ function waitForClick(expectedState, timeout = 3000) {
   });
 }
 
-const button = document.querySelector('.ytp-subtitles-button');
-button.addEventListener('click', () => {
-  console.log('[tlang] cc button cicked');
-})
+async function getDataFromStorage(videoId) {
+  const key = `subtitles:${videoId}:en`;
+  const data = await browser.storage.local.get(key);
+  if (Object.hasOwn(data, key)) {
+    return data[key];
+  } else {
+    return null;
+  }
+}
 
-resourceObserver.observe({
-  'type': 'resource',
-  'buffered': true,
-});
-setTimeout(() => {
-  clickCCButtonTwice();
-  }, 4000);
-//clickCCButtonTwice();
+function waitForInitialRender(video, timeout=30000) {
+  return new Promise((resolve, reject) => {
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      resolve();
+      return;
+    }
+
+    let timer;
+
+    function cleanup() {
+      clearTimeout(timer);
+      video.removeEventListener('loadeddata', handleLoaded);
+      video.removeEventListener('error', handleError);
+    }
+
+    function handleLoaded() {
+      cleanup();
+      resolve();
+    }
+
+    function handleError() {
+      cleanup();
+      reject(new Error('[tlang] video failed to load'));
+    }
+
+    video.addEventListener('loadeddata', handleLoaded, {once: true});
+    video.addEventListener('error', handleError, {once: true});
+
+    timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('[tlang] initial video data timeout'));
+    }, timeout);
+  });
+}
+
+function waitForTimedTextEntry(videoId, timeout = 60000) {
+  return new Promise((resolve, reject) => {
+    const urlPrefix = 'https://www.youtube.com/api/timedtext';
+    let timer;
+
+    const resourceObserver = new PerformanceObserver((list, resourceObserver) => {
+      const entries = list.getEntries();
+      for (const entry of entries) {
+        const url = new URL(entry.name);
+        const matchUrl = entry.name.startsWith(urlPrefix);
+        const matchVideoId = url.searchParams.get('v') === videoId;
+        if (matchUrl && matchVideoId) {
+          clearTimeout(timer);
+          resourceObserver.disconnect();
+          resolve(entry);
+          return ;
+        }
+      }
+    });
+
+    resourceObserver.observe({
+      type: 'resource',
+      buffered: true,
+    });
+
+    timer = setTimeout(() => {
+      resourceObserver.disconnect();
+      reject(new Error('[tlang] timed text entry request timed out'));
+    }, timeout);
+  });
+}
+
+async function storeData(videoId, data) {
+  const storageKey = `subtitles:${videoId}:en`
+  await browser.storage.local.clear();
+  await browser.storage.local.set({
+    [storageKey]: {
+      videoId,
+      language,
+      text: data,
+      savedAt: Date.now()
+    }
+  });
+  return;
+}
+
+async function fetchVTT(entry) {
+  const url = new URL(entry.name);
+
+  url.searchParams.set('fmt', 'json3');
+  url.searchParams.set('tlang', 'en');
+
+  const videoId = url.searchParams.get('v');
+  const language = 'en';
+
+  const response = await fetch(url);
+  if(!response.ok) {
+    throw new Error(
+      `[tlang] subtitle fetch failed: HTTP ${response.status}`
+    );
+  }
+  const subtitleText = await response.text();
+  return subtitleText;
+}
+
+function findTimedTextEntry(videoId) {
+  return performance
+    .getEntriesByType('resource')
+    .find((entry) => {
+      const url = new URL(entry.name);
+      return (
+        url.pathname === '/api/timedtext' &&
+        url.searchParams.get('v') === videoId
+      );
+    });
+}
+
+function formatTimedText(data) {
+  const parsed = typeof(data) === 'string' ? JSON.parse(data) : data;
+
+  const captions = [];
+
+  for (const event of parsed.events) {
+    if (!event.segs) continue;
+
+    const text = event.segs
+      .map((seg) => seg.utf8 ?? ' ')
+      .join('')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!text) continue;
+    captions.push({
+      text,
+      startTimeMs: event.tStartMs,
+      endTimeMs: event.tStartMs+event.dDurationMs
+    });
+  }
+
+  return captions;
+}
+
+async function getVTT() {
+  const pageUrl = new URL(location.href);
+  const videoId = pageUrl.searchParams.get('v');
+
+  const storedData = await getDataFromStorage(videoId);
+  if (storedData) {
+    return storedData.text;
+  }
+
+  const video = document.querySelector('video.html5-main-video');
+  const button = document.querySelector('.ytp-subtitles-button');
+
+  if (!video) throw new Error('video not found');
+  if (!button) throw new Error('CC button not found');
+
+  let entry = findTimedTextEntry(videoId);
+
+  if (!entry) {
+    const entryPromise = waitForTimedTextEntry(videoId);
+
+    await waitForInitialRender(video);
+    entry = await clickCCButtonTwiceAndGetEntry(button, entryPromise);
+  }
+
+  const rawData = await fetchVTT(entry);
+  const formattedData = formatTimedText(rawData);
+  await storeData(videoId, formattedData);
+  return formattedData;
+}
+
+getVTT()
+  .then((text) => console.log('[tlang] VTT: ', text))
+  .catch((error) => console.log('[tlang] error: ', error));
