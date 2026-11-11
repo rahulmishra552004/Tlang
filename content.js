@@ -9,6 +9,9 @@ const tlang = {
   fetchVTT,
   findTimedTextEntry,
   formatTimedText,
+  currentTimeIn,
+  getNextPeriod,
+  handleTimeUpdate,
   getVTT,
 }
 
@@ -172,7 +175,6 @@ async function storeData(videoId, data) {
   await browser.storage.local.set({
     [storageKey]: {
       videoId,
-      language,
       text: data,
       savedAt: Date.now()
     }
@@ -266,6 +268,81 @@ async function getVTT() {
   return formattedData;
 }
 
-getVTT()
-  .then((text) => console.log('[tlang] VTT: ', text))
-  .catch((error) => console.log('[tlang] error: ', error));
+function currentTimeIn(currentTimeMs, period) {
+  if (!period) return false;
+
+  if (currentTimeMs >= period.startTimeMs
+    && currentTimeMs < period.endTimeMs) {
+    return true;
+  } else {
+    return false
+  }
+}
+
+function getNextPeriod(captions, currentTimeMs) {
+  const n = captions.length;
+  let low = 0;
+  let high = n-1;
+
+  let ans;
+  while (low <= high) {
+    const mid = Math.floor((low+high)/2);
+    if (currentTimeMs <= captions[mid].startTimeMs) {
+      ans = mid;
+      high = mid-1;
+    } else if (currentTimeMs > captions[mid].startTimeMs) {
+      low = mid+1;
+    }
+  }
+  return captions[ans];
+}
+
+function handleTimeUpdate(event, captions) {
+  const currentTimeMs = event.currentTarget.currentTime*1000;
+  console.log('currentTimeMs: ', currentTimeMs);
+  console.log('currentPeriod: ', currentPeriod?.startTimeMs);
+  console.log('nextPeriod: ', nextPeriod?.startTimeMs);
+
+  if (!currentTimeIn(currentTimeMs, currentPeriod)
+    && !currentTimeIn(currentTimeMs, nextPeriod)) {
+    nextPeriod = getNextPeriod(captions, currentTimeMs);
+
+  } else if (!currentTimeIn(currentTimeMs, currentPeriod)
+    && currentTimeIn(currentTimeMs, nextPeriod)) {
+    console.log('next text: ', nextPeriod.text);
+    const sentence = new SpeechSynthesisUtterance(nextPeriod.text);
+    window.speechSynthesis.speak(sentence);
+    currentPeriod = nextPeriod;
+    nextPeriod = getNextPeriod(captions, currentTimeMs);
+
+  } else {
+    return;
+  }
+}
+
+async function main() {
+  let captions;
+  try {
+    captions = await getVTT();
+    console.log('[tlang] captions captured');
+    console.log(captions);
+  } catch (error) {
+    console.log('[tlang] error: ', error);
+    throw new Error(error);
+  }
+
+  const video = document.querySelector('video.html5-main-video');
+  if (!video) {
+    console.log('[tlang] video element not found');
+  } else {
+    video.addEventListener('timeupdate', (event) => {
+      handleTimeUpdate(event, captions);
+    });
+  }
+}
+
+let currentPeriod = null;
+let nextPeriod = null;
+
+main();
+

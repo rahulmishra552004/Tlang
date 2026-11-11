@@ -19,7 +19,7 @@
   "background": {
     "service_worker": "service-worker.js"
   },
-  "permissions": ["storage"]
+  "permissions": ["storage", "tts"]
 }
 
 
