@@ -12,7 +12,11 @@ const tlang = {
   currentTimeIn,
   getNextPeriod,
   handleTimeUpdate,
+  speak,
+  waitForPlayerElements,
   getVTT,
+  addVideoEventListeners,
+  main,
 }
 
 const tlangGreeting = 'hi from tlang';
@@ -238,6 +242,37 @@ function formatTimedText(data) {
   return captions;
 }
 
+function waitForPlayerElements(timeout = 15000) {
+  return new Promise((resolve, reject) => {
+    const playerObserver = new MutationObserver(check);
+
+    const timer = setTimeout(() => {
+      playerObserver.disconnect();
+      reject(new Error('[tlang] Timed out waiting for video player'));
+    }, timeout);
+
+    function check() {
+      const video = document.querySelector('video.html5-main-video');
+      const button = document.querySelector('.ytp-subtitles-button');
+
+      if (video && button) {
+        clearTimeout(timer);
+        playerObserver.disconnect();
+        resolve(video, button);
+      }
+    }
+
+    playerObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    check();
+  });
+}
+
 async function getVTT() {
   const pageUrl = new URL(location.href);
   const videoId = pageUrl.searchParams.get('v');
@@ -299,9 +334,9 @@ function getNextPeriod(captions, currentTimeMs) {
 
 function handleTimeUpdate(event, captions) {
   const currentTimeMs = event.currentTarget.currentTime*1000;
-  console.log('currentTimeMs: ', currentTimeMs);
-  console.log('currentPeriod: ', currentPeriod?.startTimeMs);
-  console.log('nextPeriod: ', nextPeriod?.startTimeMs);
+  const video = event.currentTarget;
+
+  if (!video.muted) video.muted = true;
 
   if (!currentTimeIn(currentTimeMs, currentPeriod)
     && !currentTimeIn(currentTimeMs, nextPeriod)) {
@@ -310,8 +345,7 @@ function handleTimeUpdate(event, captions) {
   } else if (!currentTimeIn(currentTimeMs, currentPeriod)
     && currentTimeIn(currentTimeMs, nextPeriod)) {
     console.log('next text: ', nextPeriod.text);
-    const sentence = new SpeechSynthesisUtterance(nextPeriod.text);
-    window.speechSynthesis.speak(sentence);
+    speak(nextPeriod.text);
     currentPeriod = nextPeriod;
     nextPeriod = getNextPeriod(captions, currentTimeMs);
 
@@ -320,7 +354,41 @@ function handleTimeUpdate(event, captions) {
   }
 }
 
+function speak(text) {
+  window.speechSynthesis.cancel();
+  const sentence = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(sentence);
+}
+
+function addVideoEventListeners(video, captions) {
+  videoListenerController?.abort();
+
+  videoListenerController = new AbortController();
+  const options = { signal: videoListenerController.signal };
+
+  video.addEventListener('timeupdate', (event) => {
+    handleTimeUpdate(event, captions);
+  }, options);
+
+  video.addEventListener('pause', () =>{
+    window.speechSynthesis.pause()
+  }, options);
+
+  video.addEventListener('play', () => {
+    window.speechSynthesis.resume();
+  }, options)
+
+  if (video.paused) {
+    window.speechSynthesis.pause();
+  } else {
+    window.speechSynthesis.resume();
+  }
+}
+
 async function main() {
+  const videoId = new URL(location.href).searchParams.get('v');
+  if (!videoId) return;
+
   let captions;
   try {
     captions = await getVTT();
@@ -331,18 +399,34 @@ async function main() {
     throw new Error(error);
   }
 
+  //rejecting outdated captions from previous video
+  const currentVideoId = new URL(location.href).searchParams.get('v');
+  if (currentVideoId != videoId) return;
+
   const video = document.querySelector('video.html5-main-video');
   if (!video) {
     console.log('[tlang] video element not found');
   } else {
-    video.addEventListener('timeupdate', (event) => {
-      handleTimeUpdate(event, captions);
-    });
+    video.muted = true;
+    addVideoEventListeners(video, captions);
   }
 }
 
 let currentPeriod = null;
 let nextPeriod = null;
+let videoListenerController = null;
+let previousVideoId = new URL(location.href).searchParams.get('v');
+window.navigation.addEventListener('currententrychange', () => {
+  const videoId = new URL(location.href).searchParams.get('v');
+  if (previousVideoId != videoId) {
+    videoListenerController?.abort();
+    currentPeriod = null;
+    nextPeriod = null;
+    window.speechSynthesis.cancel();
+    previousVideoId = videoId;
+    main();
+  }
+});
 
 main();
 
