@@ -258,7 +258,7 @@ function waitForPlayerElements(timeout = 15000) {
       if (video && button) {
         clearTimeout(timer);
         playerObserver.disconnect();
-        resolve(video, button);
+        resolve({video, button});
       }
     }
 
@@ -389,6 +389,15 @@ async function main() {
   const videoId = new URL(location.href).searchParams.get('v');
   if (!videoId) return;
 
+  try {
+    await waitForPlayerElements();
+  } catch (error) {
+    console.log('[tlang] error: ', error);
+    return;
+  }
+
+  if (new URL(location.href).searchParams.get('v') != videoId) return;
+
   let captions;
   try {
     captions = await getVTT();
@@ -400,8 +409,7 @@ async function main() {
   }
 
   //rejecting outdated captions from previous video
-  const currentVideoId = new URL(location.href).searchParams.get('v');
-  if (currentVideoId != videoId) return;
+  if (new URL(location.href).searchParams.get('v') != videoId) return;
 
   const video = document.querySelector('video.html5-main-video');
   if (!video) {
@@ -414,10 +422,13 @@ async function main() {
 
 let currentPeriod = null;
 let nextPeriod = null;
+
 let videoListenerController = null;
 let previousVideoId = new URL(location.href).searchParams.get('v');
+
 window.navigation.addEventListener('currententrychange', () => {
   const videoId = new URL(location.href).searchParams.get('v');
+
   if (previousVideoId != videoId) {
     videoListenerController?.abort();
     currentPeriod = null;
