@@ -10,7 +10,7 @@ const tlang = {
   findTimedTextEntry,
   formatTimedText,
   currentTimeIn,
-  getNextPeriod,
+  getPeriod,
   handleTimeUpdate,
   speak,
   waitForPlayerElements,
@@ -189,11 +189,7 @@ async function storeData(videoId, data) {
 async function fetchVTT(entry) {
   const url = new URL(entry.name);
 
-  url.searchParams.set('fmt', 'json3');
-  url.searchParams.set('tlang', 'en');
-
   const videoId = url.searchParams.get('v');
-  const language = 'en';
 
   const response = await fetch(url);
   if(!response.ok) {
@@ -221,21 +217,59 @@ function formatTimedText(data) {
   const parsed = typeof(data) === 'string' ? JSON.parse(data) : data;
 
   const captions = [];
+  const wordsTimeline = [];
 
   for (const event of parsed.events) {
-    if (!event.segs) continue;
+    if (!Object.hasOwn(event, 'segs')) continue;
 
-    const text = event.segs
-      .map((seg) => seg.utf8 ?? ' ')
-      .join('')
+    const tStartMs = event.tStartMs;
+    let firstSegment = true;
+
+    for (const seg of event.segs) {
+      const text = seg.utf8;
+
+      if (!text.trim()) continue;
+
+      wordsTimeline.push({
+        text: firstSegment ? ' ' + text : text,
+        'time': tStartMs + (seg.tOffsetMs ?? 0),
+      });
+      firstSegment = false;
+    }
+  }
+
+  const lastEvent = parsed.events.at(-1);
+  const transcriptEndMs = lastEvent.tStartMs + lastEvent.dDurationMs;
+
+  let i = 0;
+  while (i < wordsTimeline.length) {
+    const parts = [];
+    const startTimeMs = wordsTimeline[i].time;
+
+    while(i < wordsTimeline.length) {
+      const segment = wordsTimeline[i];
+      parts.push(segment.text);
+      i++;
+
+      if (
+        segment.text.trimEnd().endsWith('.')
+        ||segment.text.trimEnd().endsWith('?')
+        ||segment.text.trimEnd().endsWith('!')
+      ) {
+        break;
+      }
+    }
+
+    const endTimeMs = wordsTimeline[i]?.time ?? transcriptEndMs;
+
+    const text = parts.join('')
       .replace(/\s+/g, ' ')
+      .replace(/\s+([.,!?;:])/g, '$1')
       .trim();
-
-    if (!text) continue;
     captions.push({
       text,
-      startTimeMs: event.tStartMs,
-      endTimeMs: event.tStartMs+event.dDurationMs
+      startTimeMs,
+      endTimeMs,
     });
   }
 
@@ -314,7 +348,7 @@ function currentTimeIn(currentTimeMs, period) {
   }
 }
 
-function getNextPeriod(captions, currentTimeMs) {
+function getPeriod(captions, currentTimeMs) {
   const n = captions.length;
   let low = 0;
   let high = n-1;
@@ -322,10 +356,11 @@ function getNextPeriod(captions, currentTimeMs) {
   let ans;
   while (low <= high) {
     const mid = Math.floor((low+high)/2);
-    if (currentTimeMs <= captions[mid].startTimeMs) {
+    // Include the caption already active at the current playback time.
+    if (currentTimeMs < captions[mid].endTimeMs) {
       ans = mid;
       high = mid-1;
-    } else if (currentTimeMs > captions[mid].startTimeMs) {
+    } else {
       low = mid+1;
     }
   }
@@ -336,28 +371,20 @@ function handleTimeUpdate(event, captions) {
   const currentTimeMs = event.currentTarget.currentTime*1000;
   const video = event.currentTarget;
 
-  if (!video.muted) video.muted = true;
+  if (video.paused) return;
 
-  if (!currentTimeIn(currentTimeMs, currentPeriod)
-    && !currentTimeIn(currentTimeMs, nextPeriod)) {
-    nextPeriod = getNextPeriod(captions, currentTimeMs);
+  const period = getPeriod(captions, currentTimeMs);
+  if ( !period || period === currentPeriod) return;
 
-  } else if (!currentTimeIn(currentTimeMs, currentPeriod)
-    && currentTimeIn(currentTimeMs, nextPeriod)) {
-    console.log('next text: ', nextPeriod.text);
-    speak(nextPeriod.text);
-    currentPeriod = nextPeriod;
-    nextPeriod = getNextPeriod(captions, currentTimeMs);
-
-  } else {
-    return;
-  }
+  currentPeriod = period;
+  console.log('next text: ', currentPeriod.text);
+  speak(currentPeriod.text);
 }
 
 function speak(text) {
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
   const sentence = new SpeechSynthesisUtterance(text);
-  window.speechSynthesis.speak(sentence);
+  synth.speak(sentence);
 }
 
 function addVideoEventListeners(video, captions) {
@@ -370,19 +397,41 @@ function addVideoEventListeners(video, captions) {
     handleTimeUpdate(event, captions);
   }, options);
 
-  video.addEventListener('pause', () =>{
+  video.addEventListener('pause', () => {
     window.speechSynthesis.pause()
   }, options);
 
-  video.addEventListener('play', () => {
+  video.addEventListener('waiting', () => {
+    window.speechSynthesis.pause()
+  }, options);
+
+  video.addEventListener('playing', () => {
     window.speechSynthesis.resume();
-  }, options)
+  }, options);
+
+  video.addEventListener('seeking', () => {
+    window.speechSynthesis.cancel();
+    currentPeriod = null;
+  }, options);
+
+  video.addEventListener('seeked', () => {
+    if(!video.paused) {
+      handleTimeUpdate({ 'currentTarget': video }, captions);
+    }
+  }, options);
 
   if (video.paused) {
     window.speechSynthesis.pause();
   } else {
     window.speechSynthesis.resume();
   }
+}
+
+function reset() {
+  videoListenerController?.abort();
+  currentPeriod = null;
+  window.speechSynthesis.cancel();
+  previousVideoId = videoId;
 }
 
 async function main() {
@@ -415,26 +464,19 @@ async function main() {
   if (!video) {
     console.log('[tlang] video element not found');
   } else {
-    video.muted = true;
     addVideoEventListeners(video, captions);
   }
 }
 
 let currentPeriod = null;
-let nextPeriod = null;
 
 let videoListenerController = null;
 let previousVideoId = new URL(location.href).searchParams.get('v');
 
 window.navigation.addEventListener('currententrychange', () => {
   const videoId = new URL(location.href).searchParams.get('v');
-
   if (previousVideoId != videoId) {
-    videoListenerController?.abort();
-    currentPeriod = null;
-    nextPeriod = null;
-    window.speechSynthesis.cancel();
-    previousVideoId = videoId;
+    reset();
     main();
   }
 });
