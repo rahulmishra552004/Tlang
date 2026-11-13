@@ -428,6 +428,7 @@ function addVideoEventListeners(video, captions) {
 }
 
 function reset() {
+  const videoId = new URL(location.href).searchParams.get('v');
   videoListenerController?.abort();
   currentPeriod = null;
   window.speechSynthesis.cancel();
@@ -435,6 +436,7 @@ function reset() {
 }
 
 async function main() {
+  const currDubbingEnableReqCnt = dubbingEnableReqCnt;
   const videoId = new URL(location.href).searchParams.get('v');
   if (!videoId) return;
 
@@ -442,7 +444,7 @@ async function main() {
     await waitForPlayerElements();
   } catch (error) {
     console.log('[tlang] error: ', error);
-    return;
+    throw new Error(error);
   }
 
   if (new URL(location.href).searchParams.get('v') != videoId) return;
@@ -464,11 +466,14 @@ async function main() {
   if (!video) {
     console.log('[tlang] video element not found');
   } else {
+    if (!DUBBING || currDubbingEnableReqCnt != dubbingEnableReqCnt) return;
     addVideoEventListeners(video, captions);
   }
 }
 
 let currentPeriod = null;
+let DUBBING = true;
+let dubbingEnableReqCnt = 0;
 
 let videoListenerController = null;
 let previousVideoId = new URL(location.href).searchParams.get('v');
@@ -477,9 +482,50 @@ window.navigation.addEventListener('currententrychange', () => {
   const videoId = new URL(location.href).searchParams.get('v');
   if (previousVideoId != videoId) {
     reset();
-    main();
+    if (DUBBING) {
+      dubbingEnableReqCnt++;
+      const currDubbingEnableReqCnt = dubbingEnableReqCnt;
+      main()
+        .catch(error => {
+          if (currDubbingEnableReqCnt === dubbingEnableReqCnt) DUBBING = false;
+          console.log('[tlang] error: ', error.message);
+        });
+    }
   }
 });
 
-main();
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'SET_DUBBING') {
+    if (message.enable === true && DUBBING === false) {
+      dubbingEnableReqCnt++;
+      const currDubbingEnableReqCnt = dubbingEnableReqCnt;
+      DUBBING = true;
+      main()
+        .then(() => sendResponse({ DUBBING }))
+        .catch((error) => {
+          if (currDubbingEnableReqCnt === dubbingEnableReqCnt) DUBBING = false;
+          sendResponse({ 'error' : error.message })
+        });
+      return true;
+
+    } else if (message.enable === false && DUBBING === true) {
+      reset();
+      DUBBING = false;
+    }
+    sendResponse({ DUBBING });
+    return;
+  }
+
+  if(message.type === 'GET_DUBBING') {
+    sendResponse({ DUBBING });
+    return;
+  }
+});
+
+const currDubbingEnableReqCnt = dubbingEnableReqCnt;
+main()
+  .catch(error => {
+    if (currDubbingEnableReqCnt === dubbingEnableReqCnt) DUBBING = false;
+    console.log('[tlang] error: ', error.message);
+  });
 

@@ -1,6 +1,60 @@
-<html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tlang</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
   <body>
-    <h1> Tlang </h1>
-    <script src="popup.js"></script>
+    <main class="popup">
+      <header class="header">
+        <img class="logo" src="logo/tlang-logo.svg" alt="Tlang" width="114" height="40">
+        <span class="platform">
+          <svg viewBox="0 0 20 14" width="16" height="12" aria-hidden="true">
+            <rect width="20" height="14" rx="4" fill="currentColor"/>
+            <path d="m8 4 5 3-5 3Z" fill="white"/>
+          </svg>
+          YouTube
+        </span>
+      </header>
+
+      <section class="intro" aria-labelledby="popup-title">
+        <p class="eyebrow">CAPTIONS, OUT LOUD</p>
+        <h1 id="popup-title">Watch. Listen.<br>Take it all in.</h1>
+        <p class="description">Give your video captions a voice.</p>
+      </section>
+
+      <section class="dubbing-card" aria-labelledby="dubbing-title">
+        <div class="card-heading">
+          <span class="voice-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M4 10v4m4-7v10m4-13v16m4-13v10m4-7v4"/>
+            </svg>
+          </span>
+          <div>
+            <h2 id="dubbing-title">Voice dubbing</h2>
+            <p>Hear captions spoken aloud.</p>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <span class="control-label">Enable dubbing</span>
+          <label class="switch">
+            <input type="checkbox" role="switch" aria-label="Enable voice dubbing" checked>
+            <span class="switch-status" aria-hidden="true">
+              <span class="status-off">Off</span>
+              <span class="status-on">On</span>
+            </span>
+            <span class="switch-track" aria-hidden="true">
+              <span class="switch-thumb"></span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <footer>Less reading. More watching.</footer>
+    </main>
+    <script src='popup.js'></script>
   </body>
 </html>

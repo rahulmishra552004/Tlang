@@ -1,0 +1,322 @@
+[
+  {
+    "text": "Hi, hello. This is Nyanyamaru.",
+    "startTimeMs": 160,
+    "endTimeMs": 2520
+  },
+  {
+    "text": "Well, the season has ended, and the result was 27th place.",
+    "startTimeMs": 2520,
+    "endTimeMs": 10946
+  },
+  {
+    "text": "Well, I think I could have done a little better, but it's not a bad ranking, so I'll go with that. So, today I'll be doing a replay analysis.",
+    "startTimeMs": 10946,
+    "endTimeMs": 25039
+  },
+  {
+    "text": "So, I didn't have much time this season, and I had n't played many multiplayer matches, to the point that the match history from the 20 Challenge I did exactly a week ago was still there. Then, about an hour before the end of the season, I played about 10 matches. I only played 10 matches, and I'd say I did pretty well with a win-loss record of 80%.",
+    "startTimeMs": 25039,
+    "endTimeMs": 46800
+  },
+  {
+    "text": "The first match was a sniper match, so let's start by looking at the sniper matches.",
+    "startTimeMs": 46800,
+    "endTimeMs": 56985
+  },
+  {
+    "text": "[clears throat] Well, this opponent is known for sniping, but I guess I was able to win because I knew their deck.",
+    "startTimeMs": 56985,
+    "endTimeMs": 74960
+  },
+  {
+    "text": "So, since they have complaints, Quek, and Lightning in their deck, it's absolutely impossible to completely shut down their attacks every time, so we need to find a way to stab Royf.",
+    "startTimeMs": 74960,
+    "endTimeMs": 92799
+  },
+  {
+    "text": "So, the opponent's defensive units are relatively few, consisting of Teslas, grunts, and bats, so the idea is to deploy Royal Hogs before the opponent's Teslas can be deployed, and then use evolved hogs to eliminate any bats they use to defend and deal a lot of damage at once.",
+    "startTimeMs": 92799,
+    "endTimeMs": 118565
+  },
+  {
+    "text": "[clears throat] Well, we'll see how things go at the beginning, uh, Ke wants to go, so let's use the cannon for now.",
+    "startTimeMs": 118565,
+    "endTimeMs": 130640
+  },
+  {
+    "text": "Once you deploy it, you get shot quickly and then immediately hit with Lightning by the Archer, which is hell, so there's nothing you can do about it so you use Ice Spirit and Delivery, landing 34 shots, which hurts a bit [clears throat], so I guess it'll probably end up being a battle of the herbs so I'll attack from the left.",
+    "startTimeMs": 130640,
+    "endTimeMs": 158800
+  },
+  {
+    "text": "Well, I really wonder. Well, it's tough, but I think I can win quite a bit. Yes, yes, yes. Since they're defending with Sura and Koumo, let's wait and see for now before hitting Ku.",
+    "startTimeMs": 158800,
+    "endTimeMs": 166371
+  },
+  {
+    "text": "[clears throat] I'm bored so I'll chip away at the quest. There's nothing I can do about the complaints so I'll combine Arch Queen and use Arch Queen to bait out Lightning and chip away at their life, but they wo n't use Lightning so they're just defending. But on the other hand, I can defend against their attacks, so it's not so bad.",
+    "startTimeMs": 166371,
+    "endTimeMs": 203480
+  },
+  {
+    "text": "So, it looked like we wouldn't make it in time for the cannon, so we went to Roy first. Tesla isn't active here, so I want to rack up some damage, but it's not going in at all. There's only one shot in it. It's incredibly cool, what should I do? Yes, yes, yes. Place the cannon and the weak attack. Yes, yes, yes. I'm really exhausted. It's really tough, but the left side can be tolerated, so I'll tolerate it without any issues, and both sides will probably be about even. Yes, yes, yes.",
+    "startTimeMs": 203480,
+    "endTimeMs": 244439
+  },
+  {
+    "text": "So, what do we do? We make them bloom. So, I'll save the evolved cannon for the next attack. Their Tesla probably won't be ready in time for the next attack.",
+    "startTimeMs": 244439,
+    "endTimeMs": 261280
+  },
+  {
+    "text": "This is it, right? Here, we defend against the opponent's attack while simultaneously using our evolutionary power to attack, read their moves with the evolutionary cannon, and then rack up a lot of damage here. Yes, yes, yes. I got quite a few rejections with this.",
+    "startTimeMs": 261280,
+    "endTimeMs": 277382
+  },
+  {
+    "text": "So, there are 70 seconds left.",
+    "startTimeMs": 277382,
+    "endTimeMs": 280634
+  },
+  {
+    "text": "Why is it no good with 70 seconds left? Since it's 800, I think I can probably get away with it.",
+    "startTimeMs": 280634,
+    "endTimeMs": 290759
+  },
+  {
+    "text": "So Arch wanted to prolong his life, but he got punched, which was a really cool move [clears throat], and then Gagoji delivered a delivery spi and a cannon. Yes, yes, yes. Deploying cannons and securing security, well, maybe we should just call it quits for now. I wonder if this deep sea tastes good. The game starts to get interesting as the play progresses. Because I had turned off Lightning. If we play defensively with low-level attacks, we can use armor chipping, Quek, and Lightning, and the opponent's spells chip away at our health quite a bit, so it's scary that they might catch up, but we'll attack properly too, and attack again, and since the opponent's Tesla isn't active, we have to advertise to defend [clears throat], and I think we'll win when time runs out. Yes, yes, yes.",
+    "startTimeMs": 290759,
+    "endTimeMs": 354039
+  },
+  {
+    "text": "Well, it's a sniper so of course the matchup is tough, but if you play well, you can surprisingly win, so [clears throat] it was pretty good. Now, onto the second match. The second match is against the newly formed Gorgonna type.",
+    "startTimeMs": 354039,
+    "endTimeMs": 373240
+  },
+  {
+    "text": "It's a bit unusual, but if you play Royal Parade in your opening hand, they'll use 8 cost so you can reach 7800 power even on your first turn. At this point, I had a feeling it was probably Royal Guard Royal Uniform, so it's important to connect to the spirit and get Zappy within range of being able to attack Archia Queen twice. Yes, yes, yes. I've now secured a bad advantage, and it looks like I can go for a reverse win, so things are looking good.",
+    "startTimeMs": 373240,
+    "endTimeMs": 411720
+  },
+  {
+    "text": "So, even though we were really short on resources, we went to Royf and racked up a lot of damage. Yes, yes, yes. So, the guide says that this Royf is good because he can use the evolution cannon. So, what do we do now? Well, since Arch Queens can't be dealt with by spells, I guess Ketsuaku is strong.",
+    "startTimeMs": 411720,
+    "endTimeMs": 434924
+  },
+  {
+    "text": "[clears throat][breathes] [clears throat] My throat hurts so it's a little hard to talk, and a new body has arrived so I'll just let the blood flow out for now, and then I'll decide what to do, and I've found that the best way to deal with accidents is probably to defend one side with Archai's cloak and the other side with Utto Deli. So, we're defending this nicely [clears throat] Yes, yes, yes. By keeping Kroka on the field, you can force them to use 4 mana here. That's pretty big. Let's just do it roughly for now, go to Evolve Lyra and use Fa [clears throat] What should we do here? Should I start with \"Ke\" or \"Ku\"? I had Deliwood in my hand, so I probably didn't need to use the Evolution Cannon. They probably had a naive idea to get me to use my evolved cannon, so it was n't a good idea to fall for that trick. However, since we've reduced their HP to 830, we should focus on defense from now on, and if there's an opening, we'll go for the kill. Is that okay? Yes, yes, yes.",
+    "startTimeMs": 434924,
+    "endTimeMs": 535720
+  },
+  {
+    "text": "Defense well.",
+    "startTimeMs": 535720,
+    "endTimeMs": 538680
+  },
+  {
+    "text": "Yes, yes, yes. [clears throat] Okay. The barrage of \"yes\" messages is incredible.",
+    "startTimeMs": 538680,
+    "endTimeMs": 548896
+  },
+  {
+    "text": "[clears throat] So, let's start with the 'Aku' part, should we eat here? It's fine to skip ahead and then eat. So, I'll hit left and go to the right before Fireball comes around, and then, once I use Fireball, well, if I use this much cost on defense, their attack will definitely not get through. They're always so noisy, saying \"It's delicious\" and \"Thank you.\" Then, place the cannon and fire it until you reach the target. This should be within two laps. yes. yes. So, well, in terms of how I played, it did n't really feel like it was going according to plan, but I think it was great that I got a good grip on the flow in the first match.",
+    "startTimeMs": 548896,
+    "endTimeMs": 611399
+  },
+  {
+    "text": "Okay, the third match is against Babangi. It's not the Arrow A, but the Rage type. So, I've put out eight factories for now, so I'll just put out a cannon haphazardly. With a cannon in this position, I can completely shut down the factories. yes. yes.",
+    "startTimeMs": 611399,
+    "endTimeMs": 631160
+  },
+  {
+    "text": "So, we'll land on the Ghost, and this is a Skeleton and Spirit, but well, the Skeleton is useful and is an excellent defensive card for the Archer group, so let's have the Ice Spirit take the target, and then I think we'll go for the Loif here.",
+    "startTimeMs": 631160,
+    "endTimeMs": 647292
+  },
+  {
+    "text": "You're not going, are you? Well, logically speaking, it's probably better not to go. The \"ba\" part is just annoying, anyway.",
+    "startTimeMs": 647292,
+    "endTimeMs": 657920
+  },
+  {
+    "text": "We do n't have many land units here, so defending against land attacks is really tough, but if you play perfectly, you can defend completely and then use Earthquake to chip away at their health and win in a tiebreaker, which is surprisingly possible. I want to do my best using that kind of fighting style. So, we covered it with Royf and also used Baba. There should be quite a few. Yes, yes, yes. However, having these ghosts around makes defense a real pain.",
+    "startTimeMs": 657920,
+    "endTimeMs": 693000
+  },
+  {
+    "text": "So, the factory has made a comeback, so we can use the cannons to finish them off, and now there's an additional attack, so we'll use Skeleton Plus Wood Ice Spirit, and the flow of sealing is pretty good, we're getting the cannons going and we're gaining a decent amount of damage advantage, so I'll use [clears throat] to erase it myself, but this is the tricky part, I think I'll probably use Quake with Archer Quinn. yes. Well, I want to take down the Archer Queen with area-of-effect attacks or something, so it's a bit tricky, but I end up attacking the right side. So, since I had Heat Speed ​​off here, I guess I'll just drop Delivery and deal with it, then evolve. It's a bit of a pain because the evolutionary bombardment hasn't hit the factory yet.",
+    "startTimeMs": 693000,
+    "endTimeMs": 754680
+  },
+  {
+    "text": "Yes, yes, yes. Yes, yes, that's right. Being split between both sides of the unit like this is just a pain. However, since I had turned off keyspeed, I just dropped the delivery and processed it as usual. So, I knew Rage was definitely coming, so I shifted my Skillton, but then it jumped in that direction. That's really cool. I want to avoid losing in a tiebreaker because of this talented player, so I want to aggressively wear him down.",
+    "startTimeMs": 754680,
+    "endTimeMs": 788519
+  },
+  {
+    "text": "So, here, we defended with a delivery cloak [clears throat] and then heatspinned, and when they attacked, we placed cannons and attacked at the same time, but you know, I wanted to deploy skeletons effectively, but I thought there was a chance they might jump towards Loif, so I waited.",
+    "startTimeMs": 788519,
+    "endTimeMs": 812680
+  },
+  {
+    "text": "Then it flies straight to the tower and looks tough, so will it turn off the evolution factory here? Well, I wonder if it will taste good? I'm not really sure. Well, we're also being forced to use evolutions, so... Well, it's about even. So, since Dama has 600, I think I'll have the advantage if it comes down to a spell-dealing showdown, which means I can still stay calm.",
+    "startTimeMs": 812680,
+    "endTimeMs": 842339
+  },
+  {
+    "text": "[clears throat] The factory hasn't come yet. I wonder why they always bring it out from the bridge entrance, but I'll stick to the delivery schedule and eat here. Yes, yes, yes. The triple timer has been activated. If you keep attacking aggressively, all you need to do is land one quick hit on the tower, and as long as they don't defend, you won't lose, so focus all your energy on defense and drop the berries.",
+    "startTimeMs": 842339,
+    "endTimeMs": 878600
+  },
+  {
+    "text": "This place is scary, isn't it? Arch Queen and Noh's form are troublesome, so I wanted to protect them with Ice Pit, but they fly away.",
+    "startTimeMs": 878600,
+    "endTimeMs": 888360
+  },
+  {
+    "text": "So, the moment the cannon is fired here, the evolution factory will come, so I'm concentrating really hard. So, with time running out, I decided to use Royfle as a last resort and go for one last hit to secure the win.",
+    "startTimeMs": 888360,
+    "endTimeMs": 906800
+  },
+  {
+    "text": "Defense is really tough, but since we actually defended perfectly and won the tiebreaker, I do n't think the matchup is that difficult. Here it comes. I think this is the fourth match. And then there's the delayed crossover.",
+    "startTimeMs": 906800,
+    "endTimeMs": 926040
+  },
+  {
+    "text": "So, this was a delay deck, and since the opponent had no ground units left, I went for Assist, but they brought out Tesla and defended themselves well.",
+    "startTimeMs": 926040,
+    "endTimeMs": 940160
+  },
+  {
+    "text": "Yes, yes, yes. It's not too bad, I guess.",
+    "startTimeMs": 940160,
+    "endTimeMs": 944520
+  },
+  {
+    "text": "[clears throat] So, with delayed crosses, well, if we don't attack both sides nicely, they'll just get away with chipping away at our rockets, so how we attack is really important, and we also have to attack both sides so that they don't activate their king, so actually, even these kinds of Sopareto Roigs are tough because they can get stunned without taking any damage. It's nice, but I wonder if it was a plan for Archia to invite people from Kinki.",
+    "startTimeMs": 944520,
+    "endTimeMs": 981184
+  },
+  {
+    "text": "However, King Ki isn't coming, so I guess it's not too bad with a decent number of balls on both sides.",
+    "startTimeMs": 981184,
+    "endTimeMs": 987880
+  },
+  {
+    "text": "So, depending on what we do, even if we reach the destination, it might be quite enjoyable.",
+    "startTimeMs": 987880,
+    "endTimeMs": 994179
+  },
+  {
+    "text": "I just return the ball normally, but when they attack with a cross, it's a little scary. It was a little scary, but I figured it would be okay since it didn't seem like they'd use crosses in their attack. And then, for some reason, my opponent cut off my own evolutionary move. I'm wondering why this is happening, since it's been cut off with Skillton, Z, and Kanite. Because I reluctantly used Rocket on Archquill, I ended up getting a massive amount of evolved Royb. Well, I guess we won thanks to this.",
+    "startTimeMs": 994179,
+    "endTimeMs": 1042880
+  },
+  {
+    "text": "So, the evolved knight just keeps deploying the evolved cannon and taking skills, and if the cannon stays high up, the opponent will also have a hard time deploying Teslas high up, so yes yes yes the flow is really good, from Skeleton-kun to Wood, and that's a damage advantage of 2300, and if you get a damage advantage with just that, you can probably win by a tie break, so just make sure you defend well. However, having only one inverted Knight is a bit of a pain. So, since this is a night show, maybe it would have been better to go to the front left and play at the back. But, for now, let's go to war in order to defend ourselves. Well, it's a name address from 2000, you know. I don't think rockets alone will be enough to catch up. There are only 2 minutes left. is.",
+    "startTimeMs": 1042880,
+    "endTimeMs": 1101840
+  },
+  {
+    "text": "But we need to calm down, make a decision, and evolve. So, here's where we'll go for a bold quick. My opponent has a cross deck, though. It was so quick and rough that it was no good, but it ended up shrinking to about 1400.",
+    "startTimeMs": 1101840,
+    "endTimeMs": 1126520
+  },
+  {
+    "text": "So, what about the opponent's cross? It's from the right, so it's tolerable, but are you going to use your evolved live attack? Ah, well, yeah. It seems like the real importance is eliminating losing opportunities, so he wanted to avoid a situation where the black piece on the right accidentally goes in big. You do n't really need to deal damage through evolution here, because you can just escape by using Air Sap anyway. Yes, yes, yes. But somehow, it seems like Loif might get hurt too.",
+    "startTimeMs": 1126520,
+    "endTimeMs": 1164000
+  },
+  {
+    "text": "Tesla doesn't run here. yes. Attack first, then defend with evolved cannons and quick attacks.",
+    "startTimeMs": 1164000,
+    "endTimeMs": 1171990
+  },
+  {
+    "text": "Well, the damage was 1600, so I guess the opponent couldn't catch up and gave up.",
+    "startTimeMs": 1171990,
+    "endTimeMs": 1177040
+  },
+  {
+    "text": "Yes, yes, yes.",
+    "startTimeMs": 1177040,
+    "endTimeMs": 1181679
+  },
+  {
+    "text": "First and foremost, the important thing is to avoid getting crossed and to attack both sides effectively. Okay, I think this is the fifth match. Well, I think this will be the last one. The other day it was Quayhog. Quest Hog actually loses surprisingly often against Tesla-type decks. Lately, everyone seems to have figured out how to use the quest tool users, and it's really tough on the defense. They start with a Mighty Kick, then I use my Kick against the Mighty Kick, jump, and then go for a Hog Rider plus cannon. But with just one cannon, you can't stop that formation and you end up losing.",
+    "startTimeMs": 1181679,
+    "endTimeMs": 1238960
+  },
+  {
+    "text": "These days, the important thing is not only knowing that, but also figuring out how to deal with it.",
+    "startTimeMs": 1238960,
+    "endTimeMs": 1242549
+  },
+  {
+    "text": "[clears throat] That's right, so to prevent the opponent from forming their formation, it's actually best to send out the Royal Hogs at the same time as their attack.",
+    "startTimeMs": 1242549,
+    "endTimeMs": 1255840
+  },
+  {
+    "text": "And this guy's stamps are really annoying.",
+    "startTimeMs": 1255840,
+    "endTimeMs": 1260039
+  },
+  {
+    "text": "So, basically, I want to play an 8 on Mighty, so I guess I wo n't play an 8 myself.",
+    "startTimeMs": 1260039,
+    "endTimeMs": 1265195
+  },
+  {
+    "text": "Well, I feel like it would be fine if it bloomed on its own. I knew this skill would fly, but it still dealt a decent amount of damage, so I decided to pass on it for now. So, I've raised the price of this item.",
+    "startTimeMs": 1265195,
+    "endTimeMs": 1281559
+  },
+  {
+    "text": "Jump Plus: I drew Hog, and well, I didn't have the opportunity to use Quick this time, so I guess it's okay.",
+    "startTimeMs": 1281559,
+    "endTimeMs": 1290039
+  },
+  {
+    "text": "Yes, but once they get to Jump Plus Hog King, they're really unstoppable, so you really have to be careful.",
+    "startTimeMs": 1290039,
+    "endTimeMs": 1300480
+  },
+  {
+    "text": "So, Ain hit one shot and then two big ones. Should I have gone to Roy Fugu before ordering delivery? Okay, okay.",
+    "startTimeMs": 1300480,
+    "endTimeMs": 1308887
+  },
+  {
+    "text": "Oh well.",
+    "startTimeMs": 1308887,
+    "endTimeMs": 1310103
+  },
+  {
+    "text": "Take a break from filming. Well, we could just use Quick to handle the location shoot. This is a bold King play. I knew the Hog Rider would come to the right to activate the attack, so I made sure to force a route.",
+    "startTimeMs": 1310103,
+    "endTimeMs": 1329320
+  },
+  {
+    "text": "This is one on the right plus a uniform on the left, with Kinki and Ka seal. yes. yes. So, since it was an emergency, I decided to clash with Terra's location shoot and handle it with Quek. The Mighty Hog is really scary, so I wanted to be able to reach higher places with a single jump, but it doesn't seem to work. And this is the shape. Well, since this time it was an evolved hand, defense seems likely. With wood and a turnip, and this is what has been climbed, so wrap it around and shave it down, yes yes yes. So, since we didn't want them to attack first, we attacked first and shot them down to the 'K'. Quite assertive. Yes, yes, yes. That was a great shutout. Wow, that was a good move. The stamps are really annoying.",
+    "startTimeMs": 1329320,
+    "endTimeMs": 1388615
+  },
+  {
+    "text": "[clears throat] So, if we attack this first and then hit a quick shot, well, the Evolution Cannon and Wood will be able to deal with the rocket method. Yes, yes, yes. And this is a pretty sneaky move, going to the right here. The arch was still high, so it stopped, but I guess I'll have to give up. Yes, yes, yes. Tools, huh? With a cannon-type deck, Royal Hog is easy to hit, but with a Tesla-type deck, Royal Hog doesn't get in, and you end up losing in the way I mentioned earlier, with Mighty Hog plus Quick. So, that's it. I've given a bit of commentary on the replays, but I think we finished the season with pretty good results.",
+    "startTimeMs": 1388615,
+    "endTimeMs": 1440143
+  },
+  {
+    "text": "So, I'll do my best this season as well.",
+    "startTimeMs": 1440143,
+    "endTimeMs": 1446039
+  },
+  {
+    "text": "So, thank you very much.",
+    "startTimeMs": 1446039,
+    "endTimeMs": 1450277
+  }
+]

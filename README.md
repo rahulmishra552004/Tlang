@@ -2,9 +2,18 @@
 
 Manifest V3 Chrome extension for YouTube transcript translation.
 
-Tlang captures the caption request for the current YouTube video, obtains the transcript, and stores it locally for later translation, display, or export. The current prototype captures the signed caption URL with the Performance API and makes a second request with `fmt=vtt` and `tlang=<language code>`. A planned response-capture path will instead clone YouTube's original response in the page's main JavaScript world, avoiding that extra request.
+Tlang captures the caption request for the current YouTube video, obtains the transcript, and stores it locally for later translation, display, or export. The current prototype captures the signed caption URL with the Performance API and makes a second request with `fmt=json3`, adding `tlang=en` only when the source track's `lang` is not already `en`. A planned response-capture path will instead clone YouTube's original response in the page's main JavaScript world, avoiding that extra request.
 
 > **Note:** nothing below is documented by YouTube. These are observations from Chrome DevTools, and YouTube can change any of them without notice. Re-run the Phase 1 tests if something stops working.
+
+## Caption formatting limitation (2026-11-12)
+
+**The current formatter only works reliably with the newer videos tested so far. Older videos are not yet reliably supported.** This is an observed limitation, not a guaranteed cutoff by upload date; compatibility depends on the caption response structure.
+
+- A later comparison on video `GQj-VXLc5ZQ` found that the English `variant=timing-optimized` response had the expected structure without `tlang`, but adding `tlang` changed it. Translation is therefore another compatibility factor; video age alone does not explain the limitation. The fetch code now omits `tlang` for source tracks already marked `lang=en`. Translated tracks still need the fallback described below.
+- The supported structure provides multiple text segments with `tOffsetMs` offsets. The formatter uses the event start plus each segment's offset to build a timeline, then groups text into utterances at segment-ending periods.
+- Some videos instead return one multiword `utf8` segment per timed event, without offsets inside the text. These responses still have event timestamps; the whole video is not necessarily contained in one segment. The current grouping can combine these blocks into long utterances and lose useful synchronization.
+- Supporting both structures needs an event-level fallback for captions without segment offsets. This fallback is not implemented yet. Exact sentence or word timestamps inside a single segment cannot be recovered from that response alone.
 
 ## Status
 
@@ -14,8 +23,8 @@ Tlang captures the caption request for the current YouTube video, obtains the tr
 | 1 | Do it by hand in DevTools | Done (open questions below) |
 | 2 | Content script on watch pages | In progress |
 | 3 | Capture the signed caption URL | Prototype implemented with `performance.getEntriesByType()` and `PerformanceObserver` |
-| 4 | Obtain and store transcript data | Manual VTT fetch prototype implemented; main-world response capture is the next revision |
-| 5 | Turn VTT into lines | Not started |
+| 4 | Obtain and store transcript data | Manual JSON3 fetch and local storage implemented; main-world response capture is the next revision |
+| 5 | Format captions for speech | Implemented for newer videos with segment offsets; event-level fallback for other caption structures is pending |
 | 6 | Handle moving to the next video | Not started |
 | 7 | Side panel, language choice, export | `storage.local` prototype implemented; UI and export not started |
 | 8 | Failures and fallback | Not started |
