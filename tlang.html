@@ -25,6 +25,18 @@
           </span>
         </label>
       </section>
+      <section class="voice-settings" aria-label="Voice settings">
+        <div class="slider-control">
+          <label for="volume-slider">Volume</label>
+          <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="1">
+          <div class="slider-scale" aria-hidden="true"><span>Quiet</span><span>Loud</span></div>
+        </div>
+        <div class="slider-control">
+          <label for="pitch-slider">Pitch</label>
+          <input id="pitch-slider" type="range" min="0" max="2" step="0.1" value="1">
+          <div class="slider-scale" aria-hidden="true"><span>Low</span><span>High</span></div>
+        </div>
+      </section>
     </main>
     <script src='popup.js'></script>
   </body>

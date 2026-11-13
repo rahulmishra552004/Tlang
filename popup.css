@@ -38,6 +38,29 @@ h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
 .switch input:not(:disabled):active ~ .switch-track .switch-thumb { scale: 0.92; }
 .switch input:disabled { cursor: wait; }
 .switch input:disabled ~ .switch-track { opacity: 0.5; }
+.voice-settings {
+  margin-top: 14px;
+  padding: 18px 16px;
+  border: 1px solid #e7e6de;
+  border-radius: 18px;
+  background: #fffdf8;
+}
+.slider-control + .slider-control {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #eeede6;
+}
+.slider-control label { display: block; margin-bottom: 10px; font-size: 12px; font-weight: 550; }
+.slider-control input {
+  display: block;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  accent-color: #788c70;
+  cursor: pointer;
+}
+.slider-control input:focus-visible { outline: 2px solid #596e50; outline-offset: 3px; border-radius: 8px; }
+.slider-scale { display: flex; justify-content: space-between; margin-top: 3px; color: #73766c; font-size: 10px; }
 @media (prefers-reduced-motion: reduce) {
   .switch-track, .switch-thumb { transition: none; }
 }

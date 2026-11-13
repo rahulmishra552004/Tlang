@@ -390,12 +390,22 @@ function speak(text) {
   const synth = window.speechSynthesis;
 
   const sentence = new SpeechSynthesisUtterance(text);
+  sentence.volume = volume;
+  sentence.pitch = pitch;
   sentence.onend = cleanup;
-  sentence.onerror = cleanup;
+  sentence.onerror = (event) => {
+    console.log('[tlang] speech error: ', event.error);
+    cleanup();
+  }
 
-  if (synth.speaking && !synth.paused) sentence.rate = 1 + (0.1)*sentencesQueued;
+  if (synth.speaking && !synth.paused) {
+    sentence.rate = Math.min(1 + (0.2)*sentencesQueued, 2);
+  }
+
   synth.speak(sentence);
   sentencesQueued++;
+  // Resume after enqueueing to avoid silent speech on page startup.
+  synth.resume();
 }
 
 function addVideoEventListeners(video, captions) {
@@ -433,11 +443,6 @@ function addVideoEventListeners(video, captions) {
     }
   }, options);
 
-  if (video.paused) {
-    window.speechSynthesis.pause();
-  } else {
-    window.speechSynthesis.resume();
-  }
 }
 
 function reset() {
@@ -491,6 +496,9 @@ let currentPeriod = null;
 let DUBBING = true;
 let dubbingEnableReqCnt = 0;
 
+let volume = 1;
+let pitch = 1;
+
 let sentencesQueued = 0;
 let speechGeneration = 0;
 
@@ -537,6 +545,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if(message.type === 'GET_DUBBING') {
     sendResponse({ DUBBING });
+    return;
+  }
+
+  if(message.type === 'SET_VOLUME') {
+    volume = message.value;
+    return;
+  }
+
+  if(message.type === 'SET_PITCH') {
+    pitch = message.value;
+    return;
+  }
+
+  if(message.type === 'GET_VOLUME') {
+    sendResponse({ volume });
+    return;
+  }
+
+  if(message.type === 'GET_PITCH') {
+    sendResponse({ pitch });
     return;
   }
 });

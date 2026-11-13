@@ -1,60 +1,70 @@
 # Tlang
 
-Manifest V3 Chrome extension for YouTube transcript translation.
+A Manifest V3 Chrome extension that reads YouTube captions aloud using the browser’s speech synthesis. The popup uses a compact cream and sage design with a voice dubbing switch.
 
-Tlang captures the caption request for the current YouTube video, obtains the transcript, and stores it locally for later translation, display, or export. The current prototype captures the signed caption URL with the Performance API and makes a second request with `fmt=json3`, adding `tlang=en` only when the source track's `lang` is not already `en`. A planned response-capture path will instead clone YouTube's original response in the page's main JavaScript world, avoiding that extra request.
+## Run locally
 
-> **Note:** nothing below is documented by YouTube. These are observations from Chrome DevTools, and YouTube can change any of them without notice. Re-run the Phase 1 tests if something stops working.
+1. Open `chrome://extensions` and enable **Developer mode**.
+2. Select **Load unpacked** and choose this repository’s folder.
+3. Open or refresh a YouTube video with captions available.
+4. Open Tlang from the extension toolbar to turn voice dubbing on or off.
 
-## Caption formatting limitation (2026-11-12)
+After changing extension files, reload the extension and refresh existing YouTube tabs so the updated content script runs.
 
-**The current formatter only works reliably with the newer videos tested so far. Older videos are not yet reliably supported.** This is an observed limitation, not a guaranteed cutoff by upload date; compatibility depends on the caption response structure.
+## Current behavior
 
-- A later comparison on video `GQj-VXLc5ZQ` found that the English `variant=timing-optimized` response had the expected structure without `tlang`, but adding `tlang` changed it. Translation is therefore another compatibility factor; video age alone does not explain the limitation. The fetch code now omits `tlang` for source tracks already marked `lang=en`. Translated tracks still need the fallback described below.
-- The supported structure provides multiple text segments with `tOffsetMs` offsets. The formatter uses the event start plus each segment's offset to build a timeline, then groups text into utterances at segment-ending periods.
-- Some videos instead return one multiword `utf8` segment per timed event, without offsets inside the text. These responses still have event timestamps; the whole video is not necessarily contained in one segment. The current grouping can combine these blocks into long utterances and lose useful synchronization.
-- Supporting both structures needs an event-level fallback for captions without segment offsets. This fallback is not implemented yet. Exact sentence or word timestamps inside a single segment cannot be recovered from that response alone.
+- Dubbing defaults to enabled for each newly loaded YouTube document. The setting is kept in the content script, separately for each tab; it is not saved across page reloads.
+- The popup queries the active tab with `GET_DUBBING` when opened and sends `SET_DUBBING` with an `enable` boolean when toggled. The switch is disabled while requests are pending.
+- The content script runs on `https://www.youtube.com/*` and uses the URL’s `v` parameter to identify the video. Navigation between videos resets speech and listeners, then starts the new video if dubbing is enabled.
+- Video pause and buffering pause speech; playback resumes it. Seeking cancels queued speech and resets the current caption.
+- Each caption utterance is queued through `SpeechSynthesisUtterance`. When speech is already active, newly queued utterances use `rate = 1 + 0.1 × unfinished utterances` to help catch up. This does not change the rate of utterances already queued.
+- The unfinished count includes both speaking and waiting utterances. Completion and error handlers decrement it; a speech generation counter prevents callbacks from canceled batches changing a reset count.
+- Initialization counters prevent outdated runs from attaching video listeners or clearing the state of newer runs after failure.
 
-## Status
+## Caption capture and storage
 
-| Phase | What | Status |
-|---|---|---|
-| 0 | Extension basics (6 lessons + final exercise) | Lessons 1, 3, 4, 5 and 6 built; Lesson 2 (Broken Color sample) and the final exercise not done yet |
-| 1 | Do it by hand in DevTools | Done (open questions below) |
-| 2 | Content script on watch pages | In progress |
-| 3 | Capture the signed caption URL | Prototype implemented with `performance.getEntriesByType()` and `PerformanceObserver` |
-| 4 | Obtain and store transcript data | Manual JSON3 fetch and local storage implemented; main-world response capture is the next revision |
-| 5 | Format captions for speech | Implemented for newer videos with segment offsets; event-level fallback for other caption structures is pending |
-| 6 | Handle moving to the next video | Not started |
-| 7 | Side panel, language choice, export | `storage.local` prototype implemented; UI and export not started |
-| 8 | Failures and fallback | Not started |
+1. Read the video ID and check local storage under `subtitles:<videoId>:en`.
+2. Reuse a matching `/api/timedtext` resource entry from the Performance API if available.
+3. Otherwise, observe resource entries, wait for initial video data, and toggle the CC button twice while preserving its original state.
+4. Fetch the captured URL as-is. Despite the `fetchVTT` name, the formatter expects YouTube JSON3 data; the current code does not rewrite `fmt`, `lang`, or `tlang`.
+5. Build a timeline from event start times and segment offsets, then group segments at ending `.`, `?`, or `!` punctuation.
+6. Store formatted captions with the video ID and save time, then attach playback listeners.
 
-## Content script findings (Lesson 3, 2026-11-08)
+The Performance API exposes the request URL and timing metadata, not its response body. The current implementation makes a separate fetch for uncached captions. Main-world response capture remains a proposed alternative.
 
-- The current manifest uses `"matches": ["https://www.youtube.com/watch*"]`. The content script therefore **only runs when a watch page is loaded or reloaded directly**. Opening the home page and then clicking a video does **not** run it, because YouTube switches pages without loading a new document.
-- **Planned Phase 2 change:** use `"matches": ["https://www.youtube.com/*"]` so the script is always present, and check in code whether the current page is a video (`/watch`).
-- **Decision (Phase 6):** since the script runs once per page load, it has to be told when YouTube moves to another video.
+## Limitations
 
-## Current prototype flow (2026-11-09)
+- Caption capture depends on YouTube’s undocumented request structure and player DOM.
+- The formatter works best with segment offsets. Tracks containing large text blocks without offsets can produce long utterances with poor synchronization. An event-level fallback is not implemented.
+- The captured response must be JSON3. Other formats, empty responses, or missing caption data can fail parsing or formatting.
+- Translation and language selection are not implemented. The `:en` storage suffix does not guarantee the captured source track is English.
+- Saving a transcript currently clears all extension local storage first, so only the latest saved transcript remains.
+- Popup failures are logged to the popup console; there is no visible error message. Opening the popup on an unsupported page cannot reach a content script.
+- Speech speed depends on the installed voice. Backlog-based rate adjustments are a heuristic, not exact synchronization with video playback.
+- Side panel, export, response-body capture, and automatic rate-limit handling remain planned work.
 
-1. Read the current `v` parameter from the watch-page URL.
-2. Check `browser.storage.local` for `subtitles:<videoId>:<language>`.
-3. Search existing `resource` performance entries for a matching `/api/timedtext` request.
-4. If no entry exists, start a `PerformanceObserver` before triggering CC. The observer Promise may resolve before it is awaited; Promises retain their settled value.
-5. Press the CC button twice while preserving its initial on/off state. Wait for the timed-text entry before the click that turns captions back off.
-6. Modify only `fmt` and `tlang`, fetch the VTT response, then store its text and metadata in `storage.local`.
+## Files
 
-The observer is started early because the caption request can occur while the video is loading. If the content script moves to `document_start`, it must wait for the video and CC button with a `MutationObserver`; those elements do not exist yet at that stage.
+| File | Purpose |
+|---|---|
+| `manifest.json` | Extension registration, content script, popup, and permissions |
+| `content.js` | Caption capture, formatting, storage, navigation, and speech playback |
+| `popup.js` | Active-tab messaging and switch state |
+| `tlang.html`, `popup.css` | Popup markup and styling |
+| `service-worker.js` | Installation logging and diagnostic greeting messages |
 
-### Performance API boundary
+## Manual checks
 
-- `performance.getEntriesByType('resource')` searches resource entries already retained in the page's performance timeline.
-- `PerformanceObserver` receives matching entries as the browser records them. `buffered: true` also requests retained earlier entries.
-- A `PerformanceResourceTiming` entry exposes the URL as `entry.name` plus timing and size metadata.
-- It does **not** expose request headers, response headers, or the response body.
-- Entries belong to a specific global context. A request made inside another frame or worker may not appear in the top frame's timeline.
+- Open a captioned video and confirm speech starts with playback.
+- Toggle dubbing off, reopen the popup, and confirm it still shows off.
+- Re-enable dubbing, pause/resume, and seek; confirm canceled speech does not continue.
+- Navigate to another video and verify the enabled preference is preserved.
+- Toggle quickly or navigate while captions load; confirm outdated initialization does not take over.
+- Check both supported segment-offset tracks and tracks without offsets.
 
-## Phase 1 findings (2026-11-08)
+The notes below preserve earlier experiments and proposals. They describe historical observations, not necessarily the current implementation.
+
+## Historical investigation: Phase 1 (2026-11-08)
 
 **Environment:** Chrome 156 on Windows 10, YouTube web client `cver=2.20261105.05.01`, as reported in the URL. Tested on video `2cNDbjPECKw` (Japanese auto-generated captions: `lang=ja`, `kind=asr`), translated with `tlang=hi`.
 
@@ -88,7 +98,7 @@ The observer is started early because the caption request can occur while the vi
 - The browser can parse it (`TextTrack.cues`, `VTTCue`), and Phase 7 can export it as `.vtt` with no conversion.
 - `json3` is YouTube's own undocumented format.
 
-## Design decisions from these findings
+## Historical design decisions and planned work
 
 - **Phase 3: capture, don't build.** The URL can't be built by hand or reused for another video, so the extension must identify the player's own signed URL for the current video:
   1. Look in the requests already recorded (`getEntriesByType`) for a `timedtext` URL whose `v=` matches the current video.
