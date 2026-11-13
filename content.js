@@ -382,9 +382,20 @@ function handleTimeUpdate(event, captions) {
 }
 
 function speak(text) {
+  const generation = speechGeneration;
+  const cleanup = () => {
+    if (generation === speechGeneration) sentencesQueued--;
+  };
+
   const synth = window.speechSynthesis;
+
   const sentence = new SpeechSynthesisUtterance(text);
+  sentence.onend = cleanup;
+  sentence.onerror = cleanup;
+
+  if (synth.speaking && !synth.paused) sentence.rate = 1 + (0.1)*sentencesQueued;
   synth.speak(sentence);
+  sentencesQueued++;
 }
 
 function addVideoEventListeners(video, captions) {
@@ -410,7 +421,9 @@ function addVideoEventListeners(video, captions) {
   }, options);
 
   video.addEventListener('seeking', () => {
+    speechGeneration++;
     window.speechSynthesis.cancel();
+    sentencesQueued = 0
     currentPeriod = null;
   }, options);
 
@@ -431,7 +444,9 @@ function reset() {
   const videoId = new URL(location.href).searchParams.get('v');
   videoListenerController?.abort();
   currentPeriod = null;
+  speechGeneration++;
   window.speechSynthesis.cancel();
+  sentencesQueued = 0
   previousVideoId = videoId;
 }
 
@@ -472,8 +487,12 @@ async function main() {
 }
 
 let currentPeriod = null;
+
 let DUBBING = true;
 let dubbingEnableReqCnt = 0;
+
+let sentencesQueued = 0;
+let speechGeneration = 0;
 
 let videoListenerController = null;
 let previousVideoId = new URL(location.href).searchParams.get('v');
