@@ -116,6 +116,67 @@ async function getVolume() {
   }
 }
 
+async function getVoices() {
+  voiceSelect.disabled = true;
+  try {
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+
+    const response = await browser.tabs.sendMessage(tab.id, {
+      'type': 'GET_VOICES',
+    });
+
+    for (const voice of response.voices) {
+      voiceSelect.add(new Option(voice.name, voice.voiceURI));
+    }
+  } catch (error) {
+    console.log('could not load voices: ', error.message);
+  } finally {
+    voiceSelect.disabled = false;
+  }
+}
+
+async function setVoice(value) {
+  voiceSelect.disabled = true;
+  try {
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+
+    const response = await browser.tabs.sendMessage(tab.id, {
+      type: 'SET_VOICE',
+      value: value,
+    });
+
+  } catch (error) {
+    console.log('could not set voice: ', error.message);
+  } finally {
+    voiceSelect.disabled = false;
+  }
+}
+
+async function getSelectedVoice() {
+  voiceSelect.disabled = true;
+  try{
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+
+    const response = await browser.tabs.sendMessage(tab.id, {
+      'type': 'GET_SELECTED_VOICE',
+    });
+    voiceSelect.value = response.voiceURI ?? '';
+  } catch (error) {
+    console.log('could not get selected voice: ', error.message);
+  } finally {
+    voiceSelect.disabled = false;
+  }
+}
+
 const dubbingSwitch = document.querySelector('.switch input[type="checkbox"]');
 dubbingSwitch.addEventListener('change', (event) => {
   setDubbing(event.target.checked);
@@ -131,8 +192,14 @@ pitchSlider.addEventListener('change', (event) => {
   setPitch(Number(event.target.value));
 });
 
+const voiceSelect = document.querySelector('#voice-select');
+voiceSelect.addEventListener('change', (event) => {
+  setVoice(event.target.value);
+});
+
 getDubbing();
 getVolume();
 getPitch();
+getVoices().then(() => getSelectedVoice());
 
 

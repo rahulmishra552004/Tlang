@@ -45,12 +45,27 @@ h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
   border-radius: 18px;
   background: #fffdf8;
 }
+.voice-control + .slider-control,
 .slider-control + .slider-control {
   margin-top: 20px;
   padding-top: 18px;
   border-top: 1px solid #eeede6;
 }
+.voice-control label,
 .slider-control label { display: block; margin-bottom: 10px; font-size: 12px; font-weight: 550; }
+.voice-control select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #dedfd4;
+  border-radius: 10px;
+  background: #f8f6f1;
+  color: #454b41;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.voice-control select:focus-visible { outline: 2px solid #596e50; outline-offset: 3px; }
 .slider-control input {
   display: block;
   width: 100%;

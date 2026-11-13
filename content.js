@@ -392,6 +392,9 @@ function speak(text) {
   const sentence = new SpeechSynthesisUtterance(text);
   sentence.volume = volume;
   sentence.pitch = pitch;
+  sentence.voice = synth.getVoices().find(
+    voice => voice.voiceURI === voiceURI
+  ) ?? null;
   sentence.onend = cleanup;
   sentence.onerror = (event) => {
     console.log('[tlang] speech error: ', event.error);
@@ -498,6 +501,7 @@ let dubbingEnableReqCnt = 0;
 
 let volume = 1;
 let pitch = 1;
+let voiceURI = null;
 
 let sentencesQueued = 0;
 let speechGeneration = 0;
@@ -565,6 +569,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if(message.type === 'GET_PITCH') {
     sendResponse({ pitch });
+    return;
+  }
+
+  if(message.type === 'GET_VOICES') {
+    const voices = window.speechSynthesis.getVoices();
+    sendResponse({
+     'voices': voices
+        .filter(voice => voice.lang.slice(0, 2) === 'en')
+        .map(voice => ({
+          'name': voice.name,
+          'voiceURI': voice.voiceURI,
+        }))
+    });
+    return;
+  }
+
+  if(message.type === 'SET_VOICE') {
+    voiceURI = message.value;
+    return;
+  }
+
+  if (message.type === 'GET_SELECTED_VOICE') {
+    sendResponse({ voiceURI });
     return;
   }
 });
