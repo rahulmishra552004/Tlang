@@ -186,11 +186,56 @@ async function storeData(videoId, data) {
   return;
 }
 
-async function fetchVTT(entry) {
-  const url = new URL(entry.name);
+async function fetchVTT(videoId) {
+  let captions;
+  try {
+    captions = await chrome.runtime.sendMessage({
+      'type': 'GET_CAPTION_TRACKS',
+      videoId,
+    })
+  } catch (error) {
+    throw new Error('[tlang] unable to fetch captions');
+  }
 
-  const videoId = url.searchParams.get('v');
+  if (!captions) {
+    throw new Error('[tlang] captions metadata unavailable');
+  }
 
+  if (captions.error) {
+    throw new Error(captions.error);
+  }
+
+  const tracks = captions?.captionTracks ?? [];
+
+  const asrTrack = tracks.find(
+    track => track.kind === 'asr' && track.languageCode === language
+  );
+
+  let url;
+  if (asrTrack) {
+    url = new URL(asrTrack.baseUrl);
+    url.searchParams.set('fmt', 'json3');
+    url.searchParams.delete('tlang');
+  } else {
+    const track = tracks?.find(track => track.isTranslatable);
+    const supported = captions?.translationLanguages?.some(
+      l => l.languageCode === language
+    );
+
+    if (track && supported) {
+      url = new URL(track.baseUrl);
+      url.searchParams.set('fmt', 'json3');
+      if (track.languageCode === language) {
+        url.searchParams.delete('tlang');
+      } else {
+        url.searchParams.set('tlang', language);
+      }
+    } else {
+      throw new Error('[tlang] captions not available for selected language');
+    }
+  }
+
+  console.log('[tlang] caption request URL:', url.href);
   const response = await fetch(url);
   if(!response.ok) {
     throw new Error(
@@ -317,21 +362,11 @@ async function getVTT() {
   }
 
   const video = document.querySelector('video.html5-main-video');
-  const button = document.querySelector('.ytp-subtitles-button');
-
   if (!video) throw new Error('video not found');
-  if (!button) throw new Error('CC button not found');
 
-  let entry = findTimedTextEntry(videoId);
+  await waitForInitialRender(video);
 
-  if (!entry) {
-    const entryPromise = waitForTimedTextEntry(videoId);
-
-    await waitForInitialRender(video);
-    entry = await clickCCButtonTwiceAndGetEntry(button, entryPromise);
-  }
-
-  const rawData = await fetchVTT(entry);
+  const rawData = await fetchVTT(videoId);
   const formattedData = formatTimedText(rawData);
   await storeData(videoId, formattedData);
   return formattedData;
@@ -502,6 +537,8 @@ let dubbingEnableReqCnt = 0;
 let volume = 1;
 let pitch = 1;
 let voiceURI = null;
+
+let language = 'en';
 
 let sentencesQueued = 0;
 let speechGeneration = 0;

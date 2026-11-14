@@ -32,11 +32,60 @@ After changing extension files, reload the extension and refresh existing YouTub
 
 The Performance API exposes the request URL and timing metadata, not its response body. The current implementation makes a separate fetch for uncached captions. Main-world response capture remains a proposed alternative.
 
+## Timed-text query findings (2026-11-14)
+
+These notes combine observed requests and tests from development. The endpoint and player metadata are undocumented; example parameter combinations are not complete working URLs.
+
+| Parameter | Meaning or observation |
+|---|---|
+| `v` | Video ID. Changing it on a captured signed URL failed in earlier tests. |
+| `lang` | Selects an existing source caption track's language; it does not translate or generate a missing track. |
+| `kind=asr` | Identifies an auto-generated source track. Creator-provided tracks usually omit it. Removing it alone does not select an uploaded track. |
+| `tlang` | Translation target: `lang=ja&tlang=hi` requests Japanese captions translated into Hindi. Omit it when source and target languages match. |
+| `fmt=json3` | Requests JSON3. In the latest test, adding it exposed the segment timing needed by the formatter. Not every track or translation is guaranteed to include per-segment offsets. |
+| `fmt=vtt` | Requests WebVTT; the earlier translation test returned VTT successfully. |
+| `name` | May identify a named caption track. Preserve it when supplied in the selected track's URL. |
+| `signature` | Signed-request data. Altering it failed in earlier tests. |
+| `expire` | Expiration timestamp; behavior at expiry has not yet been tested. |
+| `sparams` | Appears to list signed parameters. Observed value: `ip,ipbits,expire,v,ei,caps,opi,xoaf`. |
+| `ip`, `ipbits` | Observed values were `0.0.0.0` and `0`. An earlier signed URL worked signed out; this does not establish a general access guarantee. |
+| `cbr`, `cbrver`, `c`, `cver`, `cos`, `cosver`, `cplayer`, `cplatform` | Describe the browser, client, or platform. Their necessity has not been tested. |
+
+The exact purpose and necessity of `ei`, `caps`, `opi`, `xoaf`, `xowf`, `xospf`, `xorb`, `xobt`, `xovt`, `key`, and `hl` have not been established here. Observed URLs had no `pot` parameter; other request configurations may differ.
+
+### Source captions versus translation
+
+- Auto-generated captions transcribe audio; auto-translation translates an existing caption track. Uploaded subtitles can also be a translation source when supported.
+- `lang=en&kind=asr` selects an English auto-generated track; `lang=ja&kind=asr&tlang=en` requests an English translation of a Japanese auto-generated track.
+- Even English-language videos do not always have an English ASR track. A declared video language does not guarantee captions in that language.
+- Matching `lang` and `tlang` produced a broken or incompatible response in testing. This is an observed compatibility issue, not a documented guarantee.
+- Changing `lang` to a mismatched track returned HTTP 200 with an empty body in an earlier test. Check response content as well as HTTP status.
+- JSON3 can contain multiple segments with `tOffsetMs`, or whole lines without word offsets. Use `event.tStartMs + (seg.tOffsetMs ?? 0)` for segment starts; splitting a line into words cannot recover missing word timestamps.
+
+### Inspecting available tracks
+
+In the YouTube page's DevTools console, this worked when `window.ytInitialPlayerResponse` was unavailable:
+
+```js
+const response = document.querySelector('#movie_player')?.getPlayerResponse?.();
+const captions = response?.captions?.playerCaptionsTracklistRenderer;
+
+console.log('Source tracks:', captions?.captionTracks);
+console.log('Translation targets:', captions?.translationLanguages);
+```
+
+`captionTracks` contains source tracks, including their `languageCode`, `kind`, `isTranslatable`, and signed `baseUrl` when supplied. Filter `kind === 'asr'` for auto-generated tracks. `translationLanguages` lists translation targets, not separate source tracks or downloaded caption bodies.
+
+`getPlayerResponse()` is an undocumented page method. These page objects cannot be read directly from the extension's isolated content-script world; page-world execution and a bridge would be needed. This inspection method is not yet the extension's capture implementation.
+
+For a future track-selection implementation, start with the chosen track's actual `baseUrl`, preserve its existing track and signed parameters, set `fmt=json3`, and add `tlang` only for a different supported target language on a translatable track. Do not construct signed URLs from scratch or assume that changing `lang` selects another available track.
+
 ## Limitations
 
 - Caption capture depends on YouTube’s undocumented request structure and player DOM.
 - The formatter works best with segment offsets. Tracks containing large text blocks without offsets can produce long utterances with poor synchronization. An event-level fallback is not implemented.
 - The captured response must be JSON3. Other formats, empty responses, or missing caption data can fail parsing or formatting.
+- Observed timed-text issue: when `lang` and `tlang` are the same (for example, `lang=en&tlang=en`), the raw response is broken or incompatible with the expected caption structure. Omit `tlang` when the source language already matches the target; use it only when translation is needed. This is an observed compatibility issue, not a documented YouTube guarantee.
 - Translation and language selection are not implemented. The `:en` storage suffix does not guarantee the captured source track is English.
 - Saving a transcript currently clears all extension local storage first, so only the latest saved transcript remains.
 - Popup failures are logged to the popup console; there is no visible error message. Opening the popup on an unsupported page cannot reach a content script.

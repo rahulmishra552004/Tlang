@@ -19,7 +19,8 @@
   "background": {
     "service_worker": "service-worker.js"
   },
-  "permissions": ["storage", "tts"]
+  "permissions": ["storage", "tts", "scripting"],
+  "host_permissions": ["https://www.youtube.com/*"]
 }
 
 
