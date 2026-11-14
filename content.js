@@ -96,8 +96,8 @@ function waitForClick(button, expectedState, timeout = 3000) {
   });
 }
 
-async function getDataFromStorage(videoId) {
-  const key = `subtitles:${videoId}:en`;
+async function getDataFromStorage(videoId, language) {
+  const key = `subtitles:${videoId}:${language}`;
   const data = await browser.storage.local.get(key);
   if (Object.hasOwn(data, key)) {
     return data[key];
@@ -173,12 +173,13 @@ function waitForTimedTextEntry(videoId, timeout = 60000) {
   });
 }
 
-async function storeData(videoId, data) {
-  const storageKey = `subtitles:${videoId}:en`
+async function storeData(videoId, data, language) {
+  const storageKey = `subtitles:${videoId}:${language}`
   await browser.storage.local.clear();
   await browser.storage.local.set({
     [storageKey]: {
       videoId,
+      language,
       text: data,
       savedAt: Date.now()
     }
@@ -186,7 +187,7 @@ async function storeData(videoId, data) {
   return;
 }
 
-async function fetchVTT(videoId) {
+async function fetchVTT(videoId, language) {
   let captions;
   try {
     captions = await chrome.runtime.sendMessage({
@@ -352,11 +353,11 @@ function waitForPlayerElements(timeout = 15000) {
   });
 }
 
-async function getVTT() {
+async function getVTT(language) {
   const pageUrl = new URL(location.href);
   const videoId = pageUrl.searchParams.get('v');
 
-  const storedData = await getDataFromStorage(videoId);
+  const storedData = await getDataFromStorage(videoId, language);
   if (storedData) {
     return storedData.text;
   }
@@ -366,9 +367,9 @@ async function getVTT() {
 
   await waitForInitialRender(video);
 
-  const rawData = await fetchVTT(videoId);
+  const rawData = await fetchVTT(videoId, language);
   const formattedData = formatTimedText(rawData);
-  await storeData(videoId, formattedData);
+  await storeData(videoId, formattedData, language);
   return formattedData;
 }
 
@@ -509,7 +510,7 @@ async function main() {
 
   let captions;
   try {
-    captions = await getVTT();
+    captions = await getVTT(language);
     console.log('[tlang] captions captured');
     console.log(captions);
   } catch (error) {
@@ -562,7 +563,7 @@ window.navigation.addEventListener('currententrychange', () => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'SET_DUBBING') {
     if (message.enable === true && DUBBING === false) {
       dubbingEnableReqCnt++;
@@ -630,6 +631,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_SELECTED_VOICE') {
     sendResponse({ voiceURI });
     return;
+  }
+
+  if(message.type === 'SET_LANGUAGE') {
+    language = message.value
+    await browser.storage.local.set({'selectedLanguage': message.value});
+    reset();
+    if (DUBBING) {
+      dubbingEnableReqCnt++;
+      const currDubbingEnableReqCnt = dubbingEnableReqCnt;
+      main()
+        .then(() => sendResponse({ language }))
+        .catch(error => {
+          if (currDubbingEnableReqCnt === dubbingEnableReqCnt) DUBBING = false;
+          console.log(error.message);
+      });
+    }
+    return true;
   }
 });
 

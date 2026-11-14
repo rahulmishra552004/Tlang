@@ -28,20 +28,15 @@
       <section class="voice-settings" aria-label="Voice settings">
         <div class="voice-control">
           <label for="language-select">Language</label>
-          <select id="language-select">
-            <option value="en" selected>English</option>
-            <option value="hi">Hindi</option>
-            <option value="ja">Japanese</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="ko">Korean</option>
-            <option value="pt">Portuguese</option>
-          </select>
+          <p id="language-description" class="control-hint">Languages available for this video</p>
+          <select id="language-select" aria-describedby="language-description">
+            <option value="en">Default (en)</option>
+         </select>
         </div>
         <div class="voice-control">
           <label for="voice-select">Voice</label>
-          <select id="voice-select">
+          <p id="voice-description" class="control-hint">Voices available on your device</p>
+          <select id="voice-select" aria-describedby="voice-description">
             <option value="">Default voice</option>
           </select>
         </div>

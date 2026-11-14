@@ -128,6 +128,8 @@ async function getVoices() {
       'type': 'GET_VOICES',
     });
 
+    voiceSelect.replaceChildren();
+    voiceSelect.add(new Option('Default voice', ''));
     for (const voice of response.voices) {
       voiceSelect.add(new Option(voice.name, voice.voiceURI));
     }
@@ -177,6 +179,59 @@ async function getSelectedVoice() {
   }
 }
 
+async function getAvailableLanguages() {
+  languageSelect.disabled = true;
+  try {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+
+    const languages = await chrome.runtime.sendMessage({
+      'type': 'GET_AVAILABLE_LANGUAGES',
+      'tabId': tab.id,
+      'videoId': new URL(tab.url).searchParams.get('v')
+    });
+
+    if(!languages) throw new Error('No language in response');
+    if(languages.error) throw new Error(languages.error);
+
+    languageSelect.replaceChildren();
+    languageSelect.add(new Option('Default (en)', 'en'));
+    for(const language of languages) {
+      languageSelect.add(new Option(language.name, language.code));
+    }
+  } catch (error) {
+    console.log('[tlang] could not get available languages: ', error.message);
+  } finally {
+    languageSelect.disabled = false;
+  }
+}
+
+async function setLanguage(value) {
+  languageSelect.disabled = true;
+  try {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+
+    await chrome.tabs.sendMessage(tab.id, {
+      'type': 'SET_LANGUAGE',
+      value,
+    });
+  } catch (error) {
+    console.log('could now set language: ', error.message);
+  } finally {
+    languageSelect.disabled = false;
+  }
+}
+
+async function getSelectedLanguage() {
+  const response = await browser.storage.local.get('selectedLanguage');
+  languageSelect.value = response.selectedLanguage ?? 'en';
+}
+
 const dubbingSwitch = document.querySelector('.switch input[type="checkbox"]');
 dubbingSwitch.addEventListener('change', (event) => {
   setDubbing(event.target.checked);
@@ -197,9 +252,15 @@ voiceSelect.addEventListener('change', (event) => {
   setVoice(event.target.value);
 });
 
+const languageSelect = document.querySelector('#language-select');
+languageSelect.addEventListener('change', (event) => {
+  setLanguage(event.target.value);
+});
+
 getDubbing();
 getVolume();
 getPitch();
 getVoices().then(() => getSelectedVoice());
+getAvailableLanguages().then(() => getSelectedLanguage());
 
 
